@@ -169,6 +169,10 @@
             margin-top: 10px;
         }
         .btn-simulate:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-simulate.dirty { background: linear-gradient(135deg, var(--accent-orange), #ea580c); box-shadow: 0 4px 18px rgba(249,115,22,0.5); }
+        .dirty-tag:not(.hidden) + .scenario-tag { margin-left: 0; }
+        .glass-card h2 { flex-wrap: wrap; }
+        .dirty-tag { font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: rgba(249,115,22,0.15); color: var(--accent-orange); border: 1px solid rgba(249,115,22,0.5); }
 
         /* Metrics Grid */
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
@@ -403,7 +407,8 @@
                     </div>
                 </div>
 
-                <button class="btn-simulate" onclick="runAllSimulations()">Jalankan Simulasi & Kalkulasi</button>
+                <button class="btn-simulate" id="btnSimulasi" onclick="runAllSimulations()">Jalankan Simulasi &amp; Kalkulasi</button>
+                <small class="note hidden" id="dirtyNote" style="text-align:center; color: var(--accent-orange);">Input berubah. Klik tombol di atas untuk memperbarui hasil.</small>
             </div>
 
         </div>
@@ -417,7 +422,7 @@
             </div>
 
             <div class="glass-card">
-                <h2>Ringkasan Finansial Laporan TCO <span class="scenario-tag" id="scenarioTag">WL Baru vs GW60E</span></h2>
+                <h2>Ringkasan Finansial Laporan TCO <span class="dirty-tag hidden no-print" id="dirtyTag" style="margin-left:auto;">Input berubah, belum dihitung ulang</span><span class="scenario-tag" id="scenarioTag">WL Baru vs GW60E</span></h2>
                 <div class="metrics-grid">
                     <div class="metric-box hero green" id="boxSaving">
                         <div class="metric-label" id="lblSaving">Total Saving GW60E vs WL</div>
@@ -553,7 +558,19 @@
         $('wlBaruInputs').classList.toggle('hidden', val !== 'baru');
         $('wlLamaInputs').classList.toggle('hidden', val !== 'lama');
         toggleLeasing();
-        runAllSimulations();
+        tandaiBelumDihitung();   // hasil TIDAK dihitung ulang otomatis; menunggu tombol simulasi
+    }
+
+    // Penanda bahwa input sudah diubah tetapi hasil di kanan masih dari simulasi sebelumnya
+    function tandaiBelumDihitung() {
+        $('btnSimulasi').classList.add('dirty');
+        $('dirtyNote').classList.remove('hidden');
+        $('dirtyTag').classList.remove('hidden');
+    }
+    function tandaiSudahDihitung() {
+        $('btnSimulasi').classList.remove('dirty');
+        $('dirtyNote').classList.add('hidden');
+        $('dirtyTag').classList.add('hidden');
     }
 
     function toggleLeasing() {
@@ -606,6 +623,7 @@
     }
 
     function runAllSimulations() {
+        tandaiSudahDihitung();
         Chart.defaults.color = tema().tick;
 
         const s1Start = parseInt($('s1Start').value), s1End = parseInt($('s1End').value);
@@ -1137,6 +1155,10 @@
             btn.disabled = false; label.innerText = awal;
         }
     }
+
+    // Setiap perubahan input hanya menandai "belum dihitung"; hasil baru muncul setelah tombol simulasi diklik
+    document.querySelector('.input-panel').addEventListener('input', tandaiBelumDihitung);
+    document.querySelector('.input-panel').addEventListener('change', tandaiBelumDihitung);
 
     // Jalankan kalkulasi otomatis saat halaman pertama kali dibuka
     toggleLeasing();
